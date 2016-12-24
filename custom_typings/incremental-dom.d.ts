@@ -2,8 +2,8 @@ declare module 'incremental-dom' {
   export let attributes : any;
   export function elementOpen(
     tagname: string,
-    key: string,
-    staticPropertyValuePairs: any[],
+    key: string|null,
+    staticPropertyValuePairs: any[]|null,
     ...propertyValuePairs: any[]): Element;
   export function elementClose(tagname: string): void;
   export function text(value: string): void;

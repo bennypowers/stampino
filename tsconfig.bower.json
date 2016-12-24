@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "amd",
+        "moduleResolution": "node",
+        "isolatedModules": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "removeComments": false,
+        "lib": ["es2017", "dom"],
+        "preserveConstEnums": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "rootDir": "./src/",
+        "outFile": "./stampino.js"
+    },
+    "include": [
+        "custom_typings/*.d.ts",
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "src/test/**"
+    ]
+}

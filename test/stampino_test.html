@@ -1,0 +1,75 @@
+<!doctype html>
+
+<html>
+  <head>
+    <script src="../../bower_components/web-component-tester/browser.js"></script>
+    <link rel="import" href="../../bower_components/imd/imd.html">
+    <script src="../../node_modules/polymer-expressions/polymer-expressions.js"></script>
+    <script src="../../node_modules/incremental-dom/dist/incremental-dom.js" as="incremental-dom"></script>
+    <script src="../stampino.js"></script>
+  </head>
+  <body>
+
+    <template id="static">
+      <div>static</div>
+    </template>
+
+    <template id="simple-binding">
+      <div>{{ foo }}</div>
+    </template>
+
+    <template id="attribute-binding">
+      <div foo$="{{ foo }}"></div>
+    </template>
+
+    <template id="property-binding">
+      <div foo="{{ foo }}"></div>
+    </template>
+
+    <template id="if-handler">
+      <template type="if" if="{{ render == 'yes' }}">
+        RENDERED
+      </template>
+    </template>
+
+    <template id="repeat-handler">
+      <template type="repeat" repeat="{{ items }}">{{ item }}</template>
+    </template>
+
+    <template id="repeat-handler-index">
+      <template type="repeat" repeat="{{ items }}">{{ index }}</template>
+    </template>
+
+    <template id="repeat-handler-scope">
+      <template type="repeat" repeat="{{ items }}">{{ outer }}</template>
+    </template>
+
+    <template id="inheritance-super-1">super</template>
+
+    <template id="inheritance-super-2"><!--
+      -->super<template name="block-a">default</template>super<!--
+    --></template>
+
+    <template id="inheritance-sub-1">
+      sub
+    </template>
+
+    <template id="inheritance-sub-2">
+      sub<template name="super"></template>sub
+    </template>
+
+    <template id="inheritance-sub-3">
+      <template name="block-a">subtemplate</template>
+    </template>
+
+    <template id="inheritance-sub-4">
+      sub<template name="super"><template name="block-a">sub</template></template>sub
+    </template>
+
+    <template id="renderer">
+      <template name="block-a">default</template>
+    </template>
+
+    <script src="../test/stampino_test.js"></script>
+  </body>
+</html>
