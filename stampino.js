@@ -1,7 +1,7 @@
-define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expressions/parser', 'polymer-expressions/eval'], function (require, exports, idom, parser_1, eval_1) {
+define("stampino", ["require", "exports", "incremental-dom", "polymer-expressions"], function (require, exports, idom, polymer_expressions_1) {
     "use strict";
-    var astFactory = new eval_1.EvalAstFactory();
-    var toCamelCase = function (s) { return s.replace(/-(\w)/, function (_, p1) { return p1.toUppercase(); }); };
+    const astFactory = new polymer_expressions_1.EvalAstFactory();
+    const toCamelCase = (s) => s.replace(/-(\w)/, (_, p1) => p1.toUppercase());
     idom.attributes.__default = function (element, name, value) {
         if (name.endsWith('$')) {
             name = name.substring(0, name.length - 1);
@@ -11,16 +11,18 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
             element[toCamelCase(name)] = value;
         }
     };
-    var _expressionCache = new WeakMap();
+    const _expressionCache = new WeakMap();
     function getValue(node, model) {
-        var ast = _expressionCache.get(node);
+        let ast = _expressionCache.get(node);
         if (ast) {
             return ast.evaluate(model);
         }
-        var value = node.textContent;
+        const value = node.textContent;
+        if (value == null)
+            return null;
         if (value.startsWith('{{') && value.endsWith('}}')) {
-            var expression = value.substring(2, value.length - 2).trim();
-            ast = (new parser_1.Parser(expression, astFactory).parse());
+            let expression = value.substring(2, value.length - 2).trim();
+            ast = (new polymer_expressions_1.Parser(expression, astFactory).parse());
             _expressionCache.set(node, ast);
             return ast.evaluate(model);
         }
@@ -30,73 +32,73 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
         return value;
     }
     exports.getValue = getValue;
-    var defaultHandlers = {
-        'if': function (template, model, renderers, handlers, attributeHandler) {
-            var ifAttribute = template.getAttributeNode('if');
-            if (ifAttribute && getValue(ifAttribute, model)) {
-                renderNode(template.content, model, renderers, handlers, attributeHandler);
-            }
-        },
-        'repeat': function (template, model, renderers, handlers, attributeHandler) {
-            var repeatAttribute = template.getAttributeNode('repeat');
-            if (repeatAttribute) {
-                var items = getValue(repeatAttribute, model);
-                for (var index = 0; index < items.length; index++) {
-                    var item = items[index];
-                    // TODO: provide keys to incremental-dom
-                    var itemModel = Object.create(model);
-                    itemModel.item = item;
-                    itemModel.index = index;
-                    itemModel['this'] = model['this'] || model;
-                    renderNode(template.content, itemModel, renderers, handlers, attributeHandler);
-                }
-            }
-        },
+    // export interface Map<string, Handler> {
+    //   [name: string]: Handler;
+    // }
+    exports.ifHandler = (template, model, renderers, handlers, attributeHandler) => {
+        const ifAttribute = template.getAttributeNode('if');
+        if (ifAttribute && getValue(ifAttribute, model)) {
+            renderNode(template.content, model, renderers, handlers, attributeHandler);
+        }
     };
-    function getRenderers(template) {
-        var blocks = template.content.querySelectorAll('template[name]');
-        var renderers = {};
-        var _loop_1 = function(i) {
-            var block = blocks[i];
-            var name_1 = block.getAttribute('name');
-            if (name_1 !== 'super') {
-                renderers[name_1] = function (model, renderers, handlers, attributeHandler) {
-                    return renderNode(block.content, model, renderers, handlers, attributeHandler);
-                };
+    exports.repeatHandler = (template, model, renderers, handlers, attributeHandler) => {
+        const repeatAttribute = template.getAttributeNode('repeat');
+        if (repeatAttribute) {
+            const items = getValue(repeatAttribute, model);
+            for (let index = 0; index < items.length; index++) {
+                let item = items[index];
+                // TODO: provide keys to incremental-dom
+                const itemModel = Object.create(model);
+                itemModel.item = item;
+                itemModel.index = index;
+                itemModel['this'] = model['this'] || model;
+                renderNode(template.content, itemModel, renderers, handlers, attributeHandler);
             }
-        };
-        for (var i = 0; i < blocks.length; i++) {
-            _loop_1(i);
+        }
+    };
+    exports.defaultHandlers = new Map([['if', exports.ifHandler], ['repeat', exports.repeatHandler]]);
+    function getRenderers(template) {
+        const blocks = template.content.querySelectorAll('template[name]');
+        const renderers = new Map();
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            const name = block.getAttribute('name');
+            if (name !== 'super') {
+                const renderer = (model, renderers, handlers, attributeHandler) => renderNode(block.content, model, renderers, handlers, attributeHandler);
+                renderers.set(name, renderer);
+            }
         }
         return renderers;
     }
     /**
-     * @returns {Function} a render function that can be passed to incremental-dom's
+     * Performs one-time setup of a template element to convert to an
+     * increment-dom render function.
+     *
+     * @returns a render function that can be passed to incremental-dom's
      * patch() function.
      */
     function prepareTemplate(template, renderers, handlers, attributeHandler, superTemplate) {
-        handlers = handlers || defaultHandlers;
-        renderers = renderers || {};
+        handlers = handlers || exports.defaultHandlers;
+        renderers = renderers || new Map();
         if (superTemplate) {
-            var superNode = template.content.querySelector('[name=super]');
+            const superNode = template.content.querySelector('[name=super]');
             if (superNode) {
-                var superRenderers_1 = getRenderers(superNode);
-                renderers = {
-                    'super': function (model, renderers, handlers, attributeHandler) {
-                        renderNode(superTemplate.content, model, superRenderers_1, handlers, attributeHandler);
-                    },
-                };
+                const superRenderers = getRenderers(superNode);
+                const superRenderer = (model, renderers, handlers, attributeHandler) => renderNode(superTemplate.content, model, superRenderers, handlers, attributeHandler);
+                renderers = new Map([['super', superRenderer]]);
             }
             else {
                 // Wrap the whole template in an implicit super call: immediately render
                 // the super template, with all renderers from this template
-                var templateRenderers = getRenderers(template);
-                Object.assign(templateRenderers, renderers);
+                const templateRenderers = getRenderers(template);
+                for (const entry of renderers) {
+                    templateRenderers.set(entry[0], entry[1]);
+                }
                 renderers = templateRenderers;
                 template = superTemplate;
             }
         }
-        return function (model) { return renderNode(template.content, model, renderers, handlers, attributeHandler); };
+        return (model) => renderNode(template.content, model, renderers, handlers, attributeHandler);
     }
     exports.prepareTemplate = prepareTemplate;
     /**
@@ -111,7 +113,8 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
      * expressions. We won't optimize until we have benchmarks in place however.
      */
     function render(template, container, model, opts) {
-        var _render = prepareTemplate(template, opts.renderers, opts.handlers, opts.attributeHandler, opts.extends);
+        opts = opts || {};
+        const _render = prepareTemplate(template, opts.renderers, opts.handlers, opts.attributeHandler, opts.extends);
         idom.patch(container, _render, model);
     }
     exports.render = render;
@@ -119,19 +122,19 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
         switch (node.nodeType) {
             // We encounter DocumentFragments when we recurse into a nested template
             case Node.DOCUMENT_FRAGMENT_NODE:
-                var children = node.childNodes;
-                for (var i = 0; i < children.length; i++) {
+                let children = node.childNodes;
+                for (let i = 0; i < children.length; i++) {
                     renderNode(children[i], model, renderers, handlers, attributeHandler);
                 }
                 break;
             case Node.ELEMENT_NODE:
-                var element = node;
+                let element = node;
                 if (element.tagName.toLowerCase() === 'template') {
-                    var template = element;
+                    let template = element;
                     // Handle template types, like: 'if' and 'repeat'
-                    var typeAttribute = element.getAttribute('type');
+                    let typeAttribute = element.getAttribute('type');
                     if (typeAttribute) {
-                        var handler = handlers[typeAttribute];
+                        let handler = handlers.get(typeAttribute);
                         if (handler) {
                             handler(template, model, renderers, handlers, attributeHandler);
                         }
@@ -141,10 +144,10 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
                         }
                     }
                     // Handle named holes
-                    var nameAttribute = element.getAttribute('name');
+                    let nameAttribute = element.getAttribute('name');
                     if (nameAttribute) {
                         if (renderers) {
-                            var renderer = renderers[nameAttribute];
+                            let renderer = renderers[nameAttribute];
                             if (renderer) {
                                 // TS revealed a type error here:
                                 renderer(model, renderers, handlers, attributeHandler);
@@ -158,36 +161,39 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
                     }
                 }
                 else {
-                    // elementOpen has a weird API. It takes varargs, so we need to build
-                    // up the arguments array to pass to Function.apply :(
-                    var args = []; //[element.tagName, null, null];
-                    var attributes = element.attributes;
-                    var handledAttributes = [];
-                    for (var i = 0; i < attributes.length; i++) {
-                        var attr = attributes[i];
+                    // elementOpen has a weird API. It takes varargs of alternating
+                    // attribute name/value pairs
+                    let propertyValuePairs = [];
+                    let attributes = element.attributes;
+                    let handledAttributes = [];
+                    for (let i = 0; i < attributes.length; i++) {
+                        let attr = attributes[i];
                         if (attributeHandler && attributeHandler.matches(attr.name)) {
                             handledAttributes.push(attr);
                         }
                         else {
                             // TODO: if attribute is a literal, add it to statics instead
-                            args.push(attr.name);
-                            args.push(getValue(attr, model));
+                            propertyValuePairs.push(attr.name);
+                            propertyValuePairs.push(getValue(attr, model));
                         }
                     }
-                    var el = idom.elementOpen.apply(idom, [element.tagName.toLowerCase(), null, null].concat(args));
-                    for (var i = 0; i < handledAttributes.length; i++) {
-                        var attr = handledAttributes[i];
-                        attributeHandler.handle(el, attr.name, attr.value, model);
+                    let tagName = element.tagName.toLowerCase();
+                    let el = idom.elementOpen(tagName, null, null, ...propertyValuePairs);
+                    for (let i = 0; i < handledAttributes.length; i++) {
+                        let attr = handledAttributes[i];
+                        if (attributeHandler) {
+                            attributeHandler.handle(el, attr.name, attr.value, model);
+                        }
                     }
-                    var children_1 = node.childNodes;
-                    for (var i = 0; i < children_1.length; i++) {
-                        renderNode(children_1[i], model, renderers, handlers, attributeHandler);
+                    let children = node.childNodes;
+                    for (let i = 0; i < children.length; i++) {
+                        renderNode(children[i], model, renderers, handlers, attributeHandler);
                     }
                     idom.elementClose(element.tagName);
                 }
                 break;
             case Node.TEXT_NODE:
-                var value = getValue(node, model);
+                let value = getValue(node, model);
                 idom.text(value);
                 break;
             default:
@@ -195,4 +201,11 @@ define("stampino", ["require", "exports", 'incremental-dom', 'polymer-expression
         }
     }
     exports.renderNode = renderNode;
+});
+/// <reference path="../../stampino.d.ts" />
+define("test/stampino_test", ["require", "exports", "stampino"], function (require, exports, stampino) {
+    "use strict";
+    const template = document.querySelector('static');
+    const output = document.createElement('div');
+    stampino.render(template, output, {});
 });
