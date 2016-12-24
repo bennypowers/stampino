@@ -114,7 +114,7 @@ suite('stampino', () => {
       assert.equal(output.innerHTML.trim(), 'supersubtemplatesuper');      
     });
 
-    test('super blocks are overridden in sub templates', () => {
+    test('super blocks are overridden in super directives', () => {
       const superTemplate = getTemplate('inheritance-super-2');
       const subTemplate = getTemplate('inheritance-sub-4');
       stampino.render(subTemplate, output, null, {extends: superTemplate});
