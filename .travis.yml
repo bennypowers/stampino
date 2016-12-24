@@ -1,0 +1,16 @@
+language: node_js
+before_script:
+  - npm install -g bower
+  - bower install
+node_js: '7'
+addons:
+  firefox: latest
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
+script:
+  - xvfb-run wct
+dist: trusty
+sudo: false

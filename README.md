@@ -1,4 +1,5 @@
 # stampino
+[![Build Status](https://travis-ci.org/justinfagnani/stampino.svg?branch=master)](https://travis-ci.org/justinfagnani/stampino)
 
 stampino is a fast and extremely powerful DOM template system based on incremental-dom and polymer-expressions.
 
