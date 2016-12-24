@@ -33,7 +33,7 @@
     "run-sequence": "^1.2.1",
     "tslint": "^4.1.1",
     "typescript": "^2.1.4",
-    "web-component-tester": "next"
+    "web-component-tester": "6.0.0-prerelease.4"
   },
   "keywords": [
     "html",
