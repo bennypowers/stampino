@@ -9,7 +9,7 @@
   "main": "./stampino.js",
   "typings": "./stampino.d.ts",
   "dependencies": {
-    "incremental-dom": "^0.4.0",
+    "incremental-dom": "^0.5.0",
     "polymer-expressions": "git+https://github.com/Polymer/polymer-expressions.git#2.0-preview"
   },
   "devDependencies": {
