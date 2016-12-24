@@ -2,7 +2,7 @@
 
 import * as idom from 'incremental-dom';
 import * as stampino from '../stampino.js';
-import {AttributeHandler, Handler, Renderer, renderNode} from '../stampino.js';
+import {RenderContext} from '../stampino.js';
 
 const assert = chai.assert;
 
@@ -130,9 +130,9 @@ suite('stampino', () => {
       const template = getTemplate('renderer');
       stampino.render(template, output, {foo: 'text'}, {
         renderers: new Map([
-          ['block-a', (model: any, renderers: Map<string, Renderer>, handlers: Map<string, Handler>, attributeHandler?: AttributeHandler) => {
+          ['block-a', (context: RenderContext) => {
             idom.elementOpen('foo-bar', undefined, undefined, []);
-            idom.text(model['foo']);
+            idom.text(context.model['foo']);
             idom.elementClose('foo-bar');
           }]
         ])

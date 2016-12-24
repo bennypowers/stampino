@@ -1,5 +1,9 @@
 declare module "stampino" {
-    export function getValue(node: Node, model: any): any;
+    /**
+     * Returns the value of a text node or attribute, evaluating it as an expression
+     * if the value starts with `{{` and ends with `}}`.
+     */
+    export function getValue(node: Text | Attr, model: any): any;
     export interface TemplateUpdater {
         (model: any): void;
     }
@@ -7,12 +11,8 @@ declare module "stampino" {
         matches(name: string): boolean;
         handle(el: Element, name: string, value: any, model: any): void;
     }
-    export interface Renderer {
-        (model: any, renderers: Map<string, Renderer>, handlers: Map<string, Handler>, attributeHandler: AttributeHandler): void;
-    }
-    export interface Handler {
-        (template: HTMLTemplateElement, model: any, renderers: Map<string, Renderer>, handlers: Map<string, Handler>, attributeHandler?: AttributeHandler): void;
-    }
+    export type Renderer = (context: RenderContext) => void;
+    export type Handler = (template: HTMLTemplateElement, context: RenderContext) => void;
     export const ifHandler: Handler;
     export const repeatHandler: Handler;
     export const defaultHandlers: Map<string, Handler>;
@@ -30,6 +30,12 @@ declare module "stampino" {
         handlers: Map<string, Handler>;
         extends?: HTMLTemplateElement;
     }
+    export interface RenderContext {
+        model: any;
+        renderers: Map<string, Renderer>;
+        handlers: Map<string, Handler>;
+        attributeHandler?: AttributeHandler;
+    }
     /**
      * Renders a template element containing a Stampino template.
      *
@@ -42,5 +48,5 @@ declare module "stampino" {
      * expressions. We won't optimize until we have benchmarks in place however.
      */
     export function render(template: HTMLTemplateElement, container: Element, model: any, opts?: Partial<RenderOptions>): void;
-    export function renderNode(node: Node, model: any, renderers: Map<string, Renderer>, handlers: Map<string, Handler>, attributeHandler?: AttributeHandler): void;
+    export function renderNode(node: Node, context: RenderContext): void;
 }

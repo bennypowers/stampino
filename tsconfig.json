@@ -9,6 +9,8 @@
         "declaration": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "removeComments": false,
         "lib": ["es2017", "dom"],
         "preserveConstEnums": true,
