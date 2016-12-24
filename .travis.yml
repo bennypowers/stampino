@@ -2,6 +2,7 @@ language: node_js
 before_script:
   - npm install -g bower
   - bower install
+  - npm run build
 node_js: '7'
 addons:
   firefox: latest
@@ -11,6 +12,6 @@ addons:
     packages:
       - google-chrome-stable
 script:
-  - xvfb-run wct
+  - xvfb-run npm run test
 dist: trusty
 sudo: false

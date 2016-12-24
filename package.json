@@ -4,7 +4,8 @@
   "scripts": {
     "build": "tsc && cp -r ./test/ ./lib/test/",
     "build:bower": "tsc -p tsconfig.bower.json && cp -r ./test/ ./lib/test/",
-    "lint": "tslint ./src/*.ts"
+    "lint": "tslint ./src/*.ts",
+    "test": "wct"
   },
   "main": "./stampino.js",
   "typings": "./stampino.d.ts",
