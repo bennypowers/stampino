@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
+    "@types/incremental-dom": "^0.5.0",
     "@types/mocha": "^2.2.34",
     "chai": "^3.5.0",
     "depcheck": "^0.6.3",

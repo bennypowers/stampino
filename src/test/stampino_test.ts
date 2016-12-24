@@ -131,7 +131,7 @@ suite('stampino', () => {
       stampino.render(template, output, {foo: 'text'}, {
         renderers: new Map([
           ['block-a', (model: any, renderers: Map<string, Renderer>, handlers: Map<string, Handler>, attributeHandler?: AttributeHandler) => {
-            idom.elementOpen('foo-bar', null, null, []);
+            idom.elementOpen('foo-bar', undefined, undefined, []);
             idom.text(model['foo']);
             idom.elementClose('foo-bar');
           }]

@@ -238,7 +238,7 @@ export function renderNode(
           }
         }
         const tagName = element.tagName.toLowerCase();
-        const el = idom.elementOpen(tagName, null, null, ...propertyValuePairs);
+        const el = idom.elementOpen(tagName, undefined, undefined, ...propertyValuePairs);
 
         // TODO: why do this as a batch after element open? It changes expression
         // evaluation order, which is a nice property to preserve!
