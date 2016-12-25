@@ -120,29 +120,54 @@ export function prepareTemplate(
   handlers = handlers || defaultHandlers;
   renderers = renderers || new Map();
 
-  if (superTemplate) {
-    const superNode = template.content.querySelector('[name=super]') as HTMLTemplateElement;
-    if (superNode) {
-      const superRenderers = getRenderers(superNode);
-      const superRenderer: Renderer = (context) =>
-          renderNode(superTemplate.content, {
-            ...context,
-            renderers: superRenderers,
-          });
-      renderers = new Map([['super', superRenderer]]);
-    } else {
-      // Wrap the whole template in an implicit super call: immediately render
-      // the super template, with all renderers from this template
-      const templateRenderers = getRenderers(template);
-      for (const entry of renderers) {
-        templateRenderers.set(entry[0], entry[1]);
+  const superRenderer = superTemplate && templateToRenderer(superTemplate);
+  const templateRenderer = templateToRenderer(template, superRenderer);
+  return (model: any) => templateRenderer({
+    model,
+    renderers: renderers!,
+    handlers: handlers!,
+    attributeHandler,
+  });
+}
+
+function templateToRenderer(template: HTMLTemplateElement, superRenderer?: Renderer): Renderer {
+  if (superRenderer) {
+    const superBlock = template.content.querySelector('[name=super]') as HTMLTemplateElement;
+    const blockOverrides = getRenderers(superBlock || template);
+    const superRendererWithOverrides = (context: RenderContext) => {
+      // Set renderers to the block overrides from the sub-template:
+      const renderers = new Map<string, Renderer>(blockOverrides);
+      // Copy in renderers from context, which take precedence
+      for (const entry of context.renderers) {
+        renderers.set(entry[0], entry[1]);
       }
-      renderers = templateRenderers;
-      template = superTemplate;
+      superRenderer({
+        ...context,
+        renderers,
+      });
+    };
+
+    if (superBlock) {
+      // If the template has an explicit "super call", render it, but
+      // add in a new 'super' block to render the super template
+      return (context: RenderContext) => {
+        const renderers = new Map<string, Renderer>(context.renderers);
+        renderers.set('super', superRendererWithOverrides);
+        renderNode(template.content, {
+          ...context,
+          renderers,
+        });
+      }
+    } else {
+      // If there's no explicit "super call", directly render the super-template
+      // which will use block overrides from the sub-template
+      return superRendererWithOverrides;
+    }
+  } else {
+    return (context: RenderContext) => {
+      renderNode(template.content, context);
     }
   }
-
-  return (model) => renderNode(template.content, {model, renderers: renderers!, handlers: handlers!, attributeHandler});
 }
 
 export interface RenderOptions {
