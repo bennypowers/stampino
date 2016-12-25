@@ -50,6 +50,11 @@
       -->super<template name="block-a">default</template>super<!--
     --></template>
 
+    <template id="inheritance-super-3">
+      <template name="block-a">super-a</template>
+      <template name="block-b">super-b</template>
+    </template>
+
     <template id="inheritance-sub-1">
       sub
     </template>
@@ -64,6 +69,16 @@
 
     <template id="inheritance-sub-4">
       sub<template name="super"><template name="block-a">sub</template></template>sub
+    </template>
+
+    <template id="inheritance-sub-sub-1">
+      <template name="block-a">sub-sub</template>
+    </template>
+
+    <template id="inheritance-sub-sub-2">
+      sub<template name="super">
+        <template name="block-a">sub-sub</template>
+      </template>sub
     </template>
 
     <template id="renderer">

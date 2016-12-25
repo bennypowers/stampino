@@ -113,14 +113,17 @@ export function prepareTemplate(
     renderers?: Map<string, Renderer>,
     handlers?: Map<string, Handler>,
     attributeHandler?: AttributeHandler,
-    superTemplate?: HTMLTemplateElement): TemplateUpdater {
+    superTemplates?: HTMLTemplateElement[]): TemplateUpdater {
   if (template == null) {
     throw new Error('null template');
   }
   handlers = handlers || defaultHandlers;
   renderers = renderers || new Map();
 
-  const superRenderer = superTemplate && templateToRenderer(superTemplate);
+  let superRenderer: Renderer|undefined;
+  if (superTemplates) {
+    superRenderer = superTemplates.reduceRight((p: Renderer, c) => templateToRenderer(c, p), undefined);
+  }
   const templateRenderer = templateToRenderer(template, superRenderer);
   return (model: any) => templateRenderer({
     model,
@@ -174,7 +177,7 @@ export interface RenderOptions {
   attributeHandler?: AttributeHandler;
   renderers: Map<string, Renderer>;
   handlers: Map<string, Handler>;
-  extends?: HTMLTemplateElement;
+  superTemplates?: HTMLTemplateElement[];
 }
 
 export interface RenderContext {
@@ -202,7 +205,7 @@ export function render(
     opts?: Partial<RenderOptions>) {
   opts = opts || {};
   const _render = prepareTemplate(template, opts!.renderers, opts!.handlers,
-      opts!.attributeHandler, opts!.extends);
+      opts!.attributeHandler, opts!.superTemplates);
   idom.patch(container, _render, model);
 }
 

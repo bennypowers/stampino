@@ -88,38 +88,52 @@ suite('stampino', () => {
     test('sub-template with no super block renders super-template first', () => {
       const superTemplate = getTemplate('inheritance-super-1');
       const subTemplate = getTemplate('inheritance-sub-1');
-      stampino.render(subTemplate, output, {}, {extends: superTemplate});
+      stampino.render(subTemplate, output, {}, {superTemplates: [superTemplate]});
       assert.equal(output.innerHTML.trim(), 'super');
     });
 
     test('sub-template with super block renders sub-template first', () => {
       const superTemplate = getTemplate('inheritance-super-1');
       const subTemplate = getTemplate('inheritance-sub-2');
-      stampino.render(subTemplate, output, {}, {extends: superTemplate});
+      stampino.render(subTemplate, output, {}, {superTemplates: [superTemplate]});
       assert.equal(output.innerHTML.trim(), 'subsupersub');
     });
 
     test('super blocks render default content', () => {
       const superTemplate = getTemplate('inheritance-super-2');
       const subTemplate = getTemplate('inheritance-sub-1');
-      stampino.render(subTemplate, output, {}, {extends: superTemplate});
+      stampino.render(subTemplate, output, {}, {superTemplates: [superTemplate]});
       assert.equal(output.innerHTML.trim(), 'superdefaultsuper');      
     });
 
     test('super blocks are overridden in sub templates', () => {
       const superTemplate = getTemplate('inheritance-super-2');
       const subTemplate = getTemplate('inheritance-sub-3');
-      stampino.render(subTemplate, output, null, {extends: superTemplate});
-      console.log(output);
+      stampino.render(subTemplate, output, null, {superTemplates: [superTemplate]});
       assert.equal(output.innerHTML.trim(), 'supersubtemplatesuper');      
     });
 
     test('super blocks are overridden in super directives', () => {
       const superTemplate = getTemplate('inheritance-super-2');
       const subTemplate = getTemplate('inheritance-sub-4');
-      stampino.render(subTemplate, output, null, {extends: superTemplate});
-      console.log(output);
+      stampino.render(subTemplate, output, null, {superTemplates: [superTemplate]});
       assert.equal(output.innerHTML.trim(), 'subsupersubsupersub');      
+    });
+
+    test('super blocks are overridden from grandchildren', () => {
+      const superTemplate = getTemplate('inheritance-super-2');
+      const subTemplate = getTemplate('inheritance-sub-3');
+      const subSubTemplate = getTemplate('inheritance-sub-sub-1');
+      stampino.render(subSubTemplate, output, null, {superTemplates: [subTemplate, superTemplate]});
+      assert.equal(output.innerHTML.trim(), 'supersub-subsuper');      
+    });
+
+    test('super blocks are overridden from grandchildren with explicit super calls', () => {
+      const superTemplate = getTemplate('inheritance-super-2');
+      const subTemplate = getTemplate('inheritance-sub-3');
+      const subSubTemplate = getTemplate('inheritance-sub-sub-2');
+      stampino.render(subSubTemplate, output, null, {superTemplates: [subTemplate, superTemplate]});
+      assert.equal(output.innerHTML.trim(), 'subsupersub-subsupersub');      
     });
 
   });
