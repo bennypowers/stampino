@@ -110,15 +110,14 @@ function getRenderers(template: HTMLTemplateElement): Map<string, Renderer> {
  */
 export function prepareTemplate(
     template: HTMLTemplateElement,
-    renderers?: Map<string, Renderer>,
-    handlers?: Map<string, Handler>,
-    attributeHandler?: AttributeHandler,
-    superTemplates?: HTMLTemplateElement[]): TemplateUpdater {
+    options?: RenderOptions): TemplateUpdater {
   if (template == null) {
     throw new Error('null template');
   }
-  handlers = handlers || defaultHandlers;
-  renderers = renderers || new Map();
+  const handlers = options && options.handlers || defaultHandlers;
+  const renderers = options && options.renderers || new Map<string, Renderer>();
+  const superTemplates = options && options.superTemplates;
+  const attributeHandler = options && options.attributeHandler;
 
   let superRenderer: Renderer|undefined;
   if (superTemplates) {
@@ -175,8 +174,8 @@ function templateToRenderer(template: HTMLTemplateElement, superRenderer?: Rende
 
 export interface RenderOptions {
   attributeHandler?: AttributeHandler;
-  renderers: Map<string, Renderer>;
-  handlers: Map<string, Handler>;
+  renderers?: Map<string, Renderer>;
+  handlers?: Map<string, Handler>;
   superTemplates?: HTMLTemplateElement[];
 }
 
@@ -202,11 +201,8 @@ export function render(
     template: HTMLTemplateElement,
     container: Element,
     model: any,
-    opts?: Partial<RenderOptions>) {
-  opts = opts || {};
-  const _render = prepareTemplate(template, opts!.renderers, opts!.handlers,
-      opts!.attributeHandler, opts!.superTemplates);
-  idom.patch(container, _render, model);
+    options?: RenderOptions) {
+  idom.patch(container, prepareTemplate(template, options), model);
 }
 
 export function renderNode(node: Node, context: RenderContext) {
