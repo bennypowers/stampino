@@ -91,33 +91,61 @@ define("stampino", ["require", "exports", "incremental-dom", "polymer-expression
      * @returns a render function that can be passed to incremental-dom's
      * patch() function.
      */
-    function prepareTemplate(template, renderers, handlers, attributeHandler, superTemplate) {
+    function prepareTemplate(template, options) {
         if (template == null) {
             throw new Error('null template');
         }
-        handlers = handlers || exports.defaultHandlers;
-        renderers = renderers || new Map();
-        if (superTemplate) {
-            const superNode = template.content.querySelector('[name=super]');
-            if (superNode) {
-                const superRenderers = getRenderers(superNode);
-                const superRenderer = (context) => renderNode(superTemplate.content, context);
-                renderers = new Map([['super', superRenderer]]);
-            }
-            else {
-                // Wrap the whole template in an implicit super call: immediately render
-                // the super template, with all renderers from this template
-                const templateRenderers = getRenderers(template);
-                for (const entry of renderers) {
-                    templateRenderers.set(entry[0], entry[1]);
-                }
-                renderers = templateRenderers;
-                template = superTemplate;
-            }
+        const handlers = options && options.handlers || exports.defaultHandlers;
+        const renderers = options && options.renderers || new Map();
+        const superTemplates = options && options.superTemplates;
+        const attributeHandler = options && options.attributeHandler;
+        let superRenderer;
+        if (superTemplates) {
+            superRenderer = superTemplates.reduceRight((p, c) => templateToRenderer(c, p), undefined);
         }
-        return (model) => renderNode(template.content, { model, renderers: renderers, handlers: handlers, attributeHandler });
+        const templateRenderer = templateToRenderer(template, superRenderer);
+        return (model) => templateRenderer({
+            model,
+            renderers: renderers,
+            handlers: handlers,
+            attributeHandler,
+        });
     }
     exports.prepareTemplate = prepareTemplate;
+    function templateToRenderer(template, superRenderer) {
+        if (superRenderer) {
+            const superBlock = template.content.querySelector('[name=super]');
+            const blockOverrides = getRenderers(superBlock || template);
+            const superRendererWithOverrides = (context) => {
+                // Set renderers to the block overrides from the sub-template:
+                const renderers = new Map(blockOverrides);
+                // Copy in renderers from context, which take precedence
+                for (const entry of context.renderers) {
+                    renderers.set(entry[0], entry[1]);
+                }
+                superRenderer(__assign({}, context, { renderers }));
+            };
+            if (superBlock) {
+                // If the template has an explicit "super call", render it, but
+                // add in a new 'super' block to render the super template
+                return (context) => {
+                    const renderers = new Map(context.renderers);
+                    renderers.set('super', superRendererWithOverrides);
+                    renderNode(template.content, __assign({}, context, { renderers }));
+                };
+            }
+            else {
+                // If there's no explicit "super call", directly render the super-template
+                // which will use block overrides from the sub-template
+                return superRendererWithOverrides;
+            }
+        }
+        else {
+            return (context) => {
+                renderNode(template.content, context);
+            };
+        }
+    }
     /**
      * Renders a template element containing a Stampino template.
      *
@@ -129,10 +157,8 @@ define("stampino", ["require", "exports", "incremental-dom", "polymer-expression
      * directly translate to incremental-dom calls, and includes pre-parsed
      * expressions. We won't optimize until we have benchmarks in place however.
      */
-    function render(template, container, model, opts) {
-        opts = opts || {};
-        const _render = prepareTemplate(template, opts.renderers, opts.handlers, opts.attributeHandler, opts.extends);
-        idom.patch(container, _render, model);
+    function render(template, container, model, options) {
+        idom.patch(container, prepareTemplate(template, options), model);
     }
     exports.render = render;
     function renderNode(node, context) {

@@ -23,12 +23,12 @@ declare module "stampino" {
      * @returns a render function that can be passed to incremental-dom's
      * patch() function.
      */
-    export function prepareTemplate(template: HTMLTemplateElement, renderers?: Map<string, Renderer>, handlers?: Map<string, Handler>, attributeHandler?: AttributeHandler, superTemplate?: HTMLTemplateElement): TemplateUpdater;
+    export function prepareTemplate(template: HTMLTemplateElement, options?: RenderOptions): TemplateUpdater;
     export interface RenderOptions {
         attributeHandler?: AttributeHandler;
-        renderers: Map<string, Renderer>;
-        handlers: Map<string, Handler>;
-        extends?: HTMLTemplateElement;
+        renderers?: Map<string, Renderer>;
+        handlers?: Map<string, Handler>;
+        superTemplates?: HTMLTemplateElement[];
     }
     export interface RenderContext {
         model: any;
@@ -47,6 +47,6 @@ declare module "stampino" {
      * directly translate to incremental-dom calls, and includes pre-parsed
      * expressions. We won't optimize until we have benchmarks in place however.
      */
-    export function render(template: HTMLTemplateElement, container: Element, model: any, opts?: Partial<RenderOptions>): void;
+    export function render(template: HTMLTemplateElement, container: Element, model: any, options?: RenderOptions): void;
     export function renderNode(node: Node, context: RenderContext): void;
 }
